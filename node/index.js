@@ -2,7 +2,7 @@
 
 var fs = require( 'fs-extra' );
 var path = require( 'path' );
-var edge = require( 'edge' );
+var edge = require( 'edge-electron' );
 var appRoot = require('app-root-path');
 var wincmd = require('node-windows');
 var spawn = require( 'child_process' ).spawn;
@@ -46,7 +46,7 @@ function check( callback ) {
 			console.error( "This command must be ran with admin priviledges" );
 			return callback( false );
 		}
-		
+
 		return callback( true );
 	});
 }
@@ -58,13 +58,13 @@ function register( dllname, menu, options, callback ) {
 		if ( !valid ) {
 			return callback();
 		}
-		
+
 		var clrMethod = edge.func({
 			assemblyFile: ourDllPath,
 			typeName: 'windowsexplorermenu_clr.ExplorerMenuInterface',
 			methodName: 'Register'
 		});
-		
+
 		var dll = path.normalize( path.resolve( __dirname, dllname ) );
 		// TODO: copy options object before modifying it
 		// TODO: sanity check parameters
@@ -80,7 +80,7 @@ function register( dllname, menu, options, callback ) {
 		options.fileExtensionFilter = options.fileExtensionFilter || [];
 		options.guid = options.guid || '';
 		options.expandFileNames = options.expandFileNames === undefined ? true : options.expandFileNames;
-		
+
 		if ( !Array.isArray( options.association ) ) {
 			options.association = [ options.association ];
 		}
@@ -91,7 +91,7 @@ function register( dllname, menu, options, callback ) {
 			options.fileExtensionFilter = [ options.fileExtensionFilter ];
 		}
 		parseMenuForImagesRecurse( options, options.menu.children );
-		
+
 		fs.ensureDirSync( path.dirname( dll ) );
 		fs.copySync( ourDllPath, path.join( path.dirname( dll ), path.basename( ourDllPath ) ) );
 		fs.copySync( ourJsonFxDllPath, path.join( path.dirname( dll ), path.basename( ourJsonFxDllPath ) ) );
@@ -117,14 +117,14 @@ function unregister( dllname, options, callback ) {
 			typeName: 'windowsexplorermenu_clr.ExplorerMenuInterface',
 			methodName: 'Unregister'
 		});
-		
+
 		var params = {
 			dllpath: path.normalize( path.resolve( dllname ) )
 		};
-		
+
 		options = options || {};
 		options.restartExplorer = options.restartExplorer === undefined ? true : options.restartExplorer;
-		
+
 		clrMethod( params, function( err ) {
 			if ( options.restartExplorer ) {
 				var proc = spawn( "cmd.exe", [ "/C", path.join( __dirname, "restart_explorer.cmd" ) ], { detached: true, stdio: 'ignore' } );
@@ -144,6 +144,3 @@ function unregister( dllname, options, callback ) {
 }
 
 exports.unregister = unregister;
-
-
-
